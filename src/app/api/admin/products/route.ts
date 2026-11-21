@@ -69,7 +69,6 @@ export async function POST(req: Request) {
       colors: JSON.stringify(["#111111", "#C6FF3D"]),
       sizes: JSON.stringify(["S", "M", "L", "XL", "XXL"]),
       imageColors: JSON.stringify({ primary: "#111111", secondary: "#C6FF3D", accent: "#FFFFFF" }),
-      image: "",
       searchable: `${d.name} ${d.team} ${d.sport} jersey`.toLowerCase(),
     },
   });

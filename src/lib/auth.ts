@@ -1,4 +1,4 @@
-import NextAuth from "next-auth";
+import NextAuth, { type NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
@@ -12,7 +12,7 @@ const credentialsSchema = z.object({
   password: z.string().min(6),
 });
 
-const providers = [
+const providers: NextAuthConfig["providers"] = [
   Credentials({
     name: "Email",
     credentials: {
@@ -26,7 +26,7 @@ const providers = [
       const user = await prisma.user.findUnique({
         where: { email: parsed.data.email.toLowerCase() },
       });
-      if (!user?.passwordHash) return null;
+      if (!user?.passwordHash || user.isActive === false) return null;
 
       const valid = await bcrypt.compare(parsed.data.password, user.passwordHash);
       if (!valid) return null;
@@ -47,7 +47,7 @@ if (process.env.AUTH_GOOGLE_CLIENT_ID && process.env.AUTH_GOOGLE_CLIENT_SECRET) 
     Google({
       clientId: process.env.AUTH_GOOGLE_CLIENT_ID,
       clientSecret: process.env.AUTH_GOOGLE_CLIENT_SECRET,
-    }) as (typeof providers)[number]
+    })
   );
 }
 

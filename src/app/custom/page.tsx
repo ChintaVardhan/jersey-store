@@ -18,7 +18,7 @@ export default async function CustomPage({ searchParams }: { searchParams: Searc
     : bases[0];
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-20 pt-24 sm:px-8">
+    <div className="mx-auto max-w-6xl px-3 pb-24 pt-[max(5.5rem,calc(env(safe-area-inset-top)+4.5rem))] sm:px-8 sm:pb-20 sm:pt-24">
       <p className="text-[10px] uppercase tracking-[0.3em] text-neutral-500">Custom Build</p>
       <h1 className="font-display text-4xl tracking-tight sm:text-5xl">Make it yours</h1>
       <p className="mt-2 max-w-lg text-sm text-neutral-600">

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { JerseySilhouette } from "@/components/jersey-silhouette";
-import { parseImageColors } from "@/lib/utils";
+import { hasProductImage, parseImageColors } from "@/lib/utils";
 
 type Props = {
   image?: string | null;
@@ -27,7 +27,7 @@ export function ProductImage({
 }: Props) {
   const colors = parseImageColors(imageColors);
 
-  if (image) {
+  if (hasProductImage(image)) {
     return (
       <div className={`relative overflow-hidden bg-mint/70 ${className}`}>
         <Image

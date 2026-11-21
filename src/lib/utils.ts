@@ -59,3 +59,12 @@ export function parseImageColors(value: string): {
     return { primary: "#111", secondary: "#fff", accent: "#C6FF3D" };
   }
 }
+
+/** Empty strings from admin-created products must not be treated as image URLs. */
+export function hasProductImage(image?: string | null): image is string {
+  return Boolean(image && image.trim());
+}
+
+export const PATCH_FEE_INR = 199;
+export const FREE_SHIPPING_INR = 2499;
+export const SHIPPING_FEE_INR = 99;

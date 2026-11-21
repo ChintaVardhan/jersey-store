@@ -1,13 +1,12 @@
-"use client";
+﻿"use client";
 
 import { FormEvent, useState } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
 function LoginForm() {
-  const router = useRouter();
   const params = useSearchParams();
   const callbackUrl = params.get("callbackUrl") || "/account";
   const [error, setError] = useState("");
@@ -23,17 +22,16 @@ function LoginForm() {
       password: String(fd.get("password")),
       redirect: false,
     });
-    setLoading(false);
     if (res?.error) {
       setError("Invalid email or password");
+      setLoading(false);
       return;
     }
-    router.push(callbackUrl);
-    router.refresh();
+    window.location.assign(callbackUrl);
   }
 
   return (
-    <div className="mx-auto max-w-md px-4 pb-20 pt-28">
+    <div className="mx-auto max-w-md px-3 pb-24 pt-[max(5.5rem,calc(env(safe-area-inset-top)+4.5rem))] sm:px-4 sm:pb-20 sm:pt-28">
       <h1 className="font-display text-4xl tracking-tight">Login</h1>
       <p className="mt-2 text-sm text-neutral-600">
         Demo: fan@jerseystore.com / jersey123

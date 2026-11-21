@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import { JerseySilhouette } from "@/components/jersey-silhouette";
 import { AddToCart } from "@/components/add-to-cart";
-import { formatInr, parseImageColors, parseJsonArray } from "@/lib/utils";
+import { formatInr, hasProductImage, parseImageColors, parseJsonArray, PATCH_FEE_INR } from "@/lib/utils";
 
 type Base = {
   id: string;
@@ -31,7 +31,7 @@ export function CustomBuilder({ bases, initialId }: { bases: Base[]; initialId: 
   return (
     <div className="mt-10 grid gap-10 lg:grid-cols-2">
       <div className="panel relative flex aspect-[4/5] items-center justify-center overflow-hidden bg-mint/50">
-        {base.image ? (
+        {hasProductImage(base.image) ? (
           <>
             <Image src={base.image} alt={base.name} fill className="object-contain p-4" sizes="50vw" />
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center pt-8">
@@ -119,11 +119,11 @@ export function CustomBuilder({ bases, initialId }: { bases: Base[]; initialId: 
             id: base.id,
             slug: base.slug,
             name: `${base.name} — ${name} #${number}`,
-            priceInr: base.priceInr + (patch !== "None" ? 199 : 0),
+            priceInr: base.priceInr + (patch !== "None" ? PATCH_FEE_INR : 0),
             sizes: base.sizes,
             primary: colors.primary,
             secondary: colors.secondary,
-            image: base.image || undefined,
+            image: hasProductImage(base.image) ? base.image : undefined,
           }}
           customName={name}
           customNumber={number}

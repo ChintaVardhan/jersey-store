@@ -3,20 +3,42 @@
 import { FormEvent, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useCartStore } from "@/store/cart-store";
-import { formatInr } from "@/lib/utils";
+import { formatInr, FREE_SHIPPING_INR, SHIPPING_FEE_INR } from "@/lib/utils";
 
 export default function CheckoutPage() {
   const { data: session, status } = useSession();
   const items = useCartStore((s) => s.items);
   const clear = useCartStore((s) => s.clear);
   const total = items.reduce((sum, i) => sum + i.priceInr * i.quantity, 0);
-  const shipping = total >= 2499 || total === 0 ? 0 : 99;
-  const router = useRouter();
+  const shipping = total === 0 || total >= FREE_SHIPPING_INR ? 0 : SHIPPING_FEE_INR;
+  const shippingGap = Math.max(0, FREE_SHIPPING_INR - total);
   const [provider, setProvider] = useState<"DEMO" | "RAZORPAY" | "STRIPE">("DEMO");
+  const [couponCode, setCouponCode] = useState("");
+  const [discount, setDiscount] = useState(0);
+  const [couponNote, setCouponNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const payable = Math.max(0, total - discount) + shipping;
+
+  async function applyCoupon() {
+    setCouponNote("");
+    const code = couponCode.trim();
+    if (!code) {
+      setDiscount(0);
+      return;
+    }
+    const res = await fetch(`/api/coupons/validate?code=${encodeURIComponent(code)}&subtotal=${total}`);
+    const data = await res.json().catch(() => ({}));
+    if (!data.valid) {
+      setDiscount(0);
+      setCouponNote(data.message || "Invalid code");
+      return;
+    }
+    setCouponCode(data.code || code.toUpperCase());
+    setDiscount(data.discountInr || 0);
+    setCouponNote(data.message || "Applied");
+  }
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -46,6 +68,7 @@ export default function CheckoutPage() {
           postalCode: fd.get("postalCode"),
           country: fd.get("country") || "IN",
           provider,
+          couponCode: discount > 0 ? couponCode : undefined,
         }),
       });
       const data = await res.json();
@@ -57,15 +80,9 @@ export default function CheckoutPage() {
         return;
       }
 
-      if (data.mode === "RAZORPAY" && data.paymentId && data.razorpayKey) {
-        // Client Razorpay checkout requires script; demo confirms order id
-        clear();
-        router.push(`/account/orders?success=${data.orderId}`);
-        return;
-      }
-
       clear();
-      router.push(`/account/orders?success=${data.orderId}`);
+      const ref = data.orderNumber || data.orderId;
+      window.location.assign(`/account/orders?success=${encodeURIComponent(ref)}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Checkout failed");
       setLoading(false);
@@ -87,7 +104,10 @@ export default function CheckoutPage() {
           <Link href="/login?callbackUrl=/checkout" className="bg-black px-5 py-3 text-[11px] uppercase tracking-widest text-lime">
             Login
           </Link>
-          <Link href="/signup" className="border border-black px-5 py-3 text-[11px] uppercase tracking-widest">
+          <Link
+            href="/signup?callbackUrl=/checkout"
+            className="border border-black px-5 py-3 text-[11px] uppercase tracking-widest"
+          >
             Sign up
           </Link>
         </div>
@@ -107,10 +127,10 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="mx-auto grid max-w-5xl gap-10 px-4 pb-20 pt-24 lg:grid-cols-2 sm:px-8">
+    <div className="mx-auto grid max-w-5xl gap-8 px-3 pb-24 pt-[max(5.5rem,calc(env(safe-area-inset-top)+4.5rem))] lg:grid-cols-2 sm:gap-10 sm:px-8 sm:pb-20 sm:pt-24">
       <div>
-        <h1 className="font-display text-4xl tracking-tight">Checkout</h1>
-        <form onSubmit={onSubmit} className="mt-8 space-y-3">
+        <h1 className="font-display text-[2.35rem] tracking-tight sm:text-4xl">Checkout</h1>
+        <form onSubmit={onSubmit} className="mt-6 space-y-3 sm:mt-8">
           {[
             ["fullName", "Full name"],
             ["phone", "Phone"],
@@ -125,10 +145,27 @@ export default function CheckoutPage() {
               name={name}
               required={name !== "line2"}
               placeholder={label}
-              className="w-full border border-neutral-300 px-3 py-2 outline-none focus:border-black"
+              className="min-h-11 w-full border border-neutral-300 px-3 py-2.5 outline-none focus:border-black"
             />
           ))}
-          <input name="country" defaultValue="IN" className="w-full border border-neutral-300 px-3 py-2" />
+          <input
+            name="country"
+            defaultValue="IN"
+            className="min-h-11 w-full border border-neutral-300 px-3 py-2.5"
+          />
+
+          <div className="flex gap-2 pt-2">
+            <input
+              value={couponCode}
+              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+              placeholder="Coupon code"
+              className="w-full border border-neutral-300 px-3 py-2 outline-none focus:border-black"
+            />
+            <button type="button" onClick={applyCoupon} className="border border-black px-3 text-[10px] uppercase tracking-[0.14em]">
+              Apply
+            </button>
+          </div>
+          {couponNote ? <p className="text-xs text-neutral-600">{couponNote}</p> : null}
 
           <div className="pt-4">
             <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500">Payment</p>
@@ -156,7 +193,7 @@ export default function CheckoutPage() {
             disabled={loading}
             className="mt-4 w-full bg-black py-3 text-[11px] uppercase tracking-[0.22em] text-lime disabled:opacity-60"
           >
-            {loading ? "Processing…" : `Pay ${formatInr(total + shipping)}`}
+            {loading ? "Processing…" : `Pay ${formatInr(payable)}`}
           </button>
         </form>
       </div>
@@ -174,13 +211,22 @@ export default function CheckoutPage() {
           ))}
         </ul>
         <div className="mt-4 space-y-1 border-t pt-4 text-sm">
+          <p className="pb-2 text-neutral-600">
+            {shippingGap === 0 ? "Free shipping on this bag." : `Add ${formatInr(shippingGap)} more for free shipping`}
+          </p>
+          {discount > 0 ? (
+            <div className="flex justify-between">
+              <span>Discount {couponCode}</span>
+              <span>−{formatInr(discount)}</span>
+            </div>
+          ) : null}
           <div className="flex justify-between">
             <span>Shipping</span>
             <span>{shipping === 0 ? "Free" : formatInr(shipping)}</span>
           </div>
           <div className="flex justify-between font-semibold">
             <span>Total</span>
-            <span>{formatInr(total + shipping)}</span>
+            <span>{formatInr(payable)}</span>
           </div>
         </div>
       </aside>

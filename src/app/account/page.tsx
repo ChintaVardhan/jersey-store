@@ -2,6 +2,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { formatInr } from "@/lib/utils";
+import { AddressManager } from "@/components/address-manager";
+import { ChangePasswordForm } from "@/components/change-password-form";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Account" };
@@ -20,9 +23,12 @@ export default async function AccountPage() {
   });
 
   return (
-    <div className="mx-auto max-w-4xl px-4 pb-20 pt-24 sm:px-8">
+    <div className="mx-auto max-w-4xl px-3 pb-24 pt-[max(5.5rem,calc(env(safe-area-inset-top)+4.5rem))] sm:px-8 sm:pb-20 sm:pt-24">
       <h1 className="font-display text-4xl tracking-tight">Hey, {user?.name || "fan"}</h1>
-      <p className="mt-1 text-sm text-neutral-600">{user?.email}</p>
+      <p className="mt-1 text-sm text-neutral-600">
+        {user?.email}
+        {user?.phone ? ` · ${user.phone}` : ""}
+      </p>
 
       <div className="mt-10 grid gap-4 sm:grid-cols-3">
         <Link href="/account/orders" className="panel bg-sky/70 p-5 hover:bg-lime/40">
@@ -45,7 +51,7 @@ export default async function AccountPage() {
                 <span>
                   #{o.id.slice(-6)} · {o.status} · {o.items.length} items
                 </span>
-                <span>₹{o.totalInr}</span>
+                <span>{formatInr(o.totalInr)}</span>
               </li>
             ))
           ) : (
@@ -56,17 +62,26 @@ export default async function AccountPage() {
 
       <section className="mt-12">
         <h2 className="font-display text-2xl">Addresses</h2>
-        <ul className="mt-4 space-y-2 text-sm text-neutral-600">
-          {user?.addresses.length ? (
-            user.addresses.map((a) => (
-              <li key={a.id}>
-                {a.fullName} — {a.line1}, {a.city}
-              </li>
-            ))
-          ) : (
-            <li>Addresses appear after checkout.</li>
-          )}
-        </ul>
+        <AddressManager
+          initial={(user?.addresses || []).map((a) => ({
+            id: a.id,
+            label: a.label,
+            fullName: a.fullName,
+            phone: a.phone,
+            line1: a.line1,
+            line2: a.line2,
+            city: a.city,
+            state: a.state,
+            postalCode: a.postalCode,
+            country: a.country,
+            isDefault: a.isDefault,
+          }))}
+        />
+      </section>
+
+      <section className="mt-12">
+        <h2 className="font-display text-2xl">Password</h2>
+        <ChangePasswordForm />
       </section>
     </div>
   );

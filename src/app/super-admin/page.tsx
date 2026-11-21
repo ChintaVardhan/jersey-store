@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { SuperAdminPanel } from "@/components/super-admin-panel";
 import { StaffBar } from "@/components/staff-bar";
 import { AdminPanel } from "@/components/admin-panel";
-import { formatInr } from "@/lib/utils";
+import { loadAdminDashboard, toAdminPanelProps } from "@/lib/admin-data";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Super Admin" };
@@ -15,17 +15,12 @@ export default async function SuperAdminPage() {
   if (!session?.user?.id) redirect("/staff");
   if (session.user.role !== "SUPER_ADMIN") redirect("/admin");
 
-  const [users, products, orders] = await Promise.all([
+  const [users, dashboard] = await Promise.all([
     prisma.user.findMany({
       orderBy: { createdAt: "desc" },
       include: { _count: { select: { orders: true } } },
     }),
-    prisma.product.findMany({ orderBy: { updatedAt: "desc" } }),
-    prisma.order.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 40,
-      include: { items: true, user: true, address: true },
-    }),
+    loadAdminDashboard(),
   ]);
 
   return (
@@ -57,30 +52,7 @@ export default async function SuperAdminPage() {
 
       <div className="mt-16 border-t border-neutral-200 pt-10">
         <h2 className="font-display text-3xl tracking-tight">Catalog & orders</h2>
-        <AdminPanel
-          products={products.map((p) => ({
-            id: p.id,
-            name: p.name,
-            stock: p.stock,
-            priceInr: p.priceInr,
-            featured: p.featured,
-          }))}
-          orders={orders.map((o) => ({
-            id: o.id,
-            status: o.status,
-            totalLabel: formatInr(o.totalInr),
-            email: o.user.email,
-            trackingNumber: o.trackingNumber,
-            city: o.address ? `${o.address.city}, ${o.address.state}` : "",
-            items: o.items.map((i) => ({
-              name: i.productName,
-              size: i.size,
-              quantity: i.quantity,
-              customName: i.customName,
-              customNumber: i.customNumber,
-            })),
-          }))}
-        />
+        <AdminPanel {...toAdminPanelProps(dashboard)} />
       </div>
       </div>
     </div>

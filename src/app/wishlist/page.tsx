@@ -33,7 +33,7 @@ export default function WishlistPage() {
   }, [ids]);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-20 pt-24 sm:px-8">
+    <div className="mx-auto max-w-6xl px-3 pb-24 pt-[max(5.5rem,calc(env(safe-area-inset-top)+4.5rem))] sm:px-8 sm:pb-20 sm:pt-24">
       <h1 className="font-display text-4xl tracking-tight">Wishlist</h1>
       {!ids.length ? (
         <p className="mt-6 text-neutral-600">

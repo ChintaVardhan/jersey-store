@@ -18,7 +18,9 @@ export function StorefrontShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <ImmersiveNav />
-      <main className="min-h-[100dvh] pb-8">{children}</main>
+      <main className="min-h-[100dvh] pb-[max(2.5rem,calc(env(safe-area-inset-bottom)+1.5rem))]">
+        {children}
+      </main>
       <SiteFooter />
       <LimeBar />
     </>

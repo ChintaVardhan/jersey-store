@@ -1,4 +1,4 @@
-import { PrismaClient, Sport, Edition } from "@prisma/client";
+import { PrismaClient, Sport, Edition, CouponType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -468,12 +468,16 @@ const products = [
 async function main() {
   console.log("Seeding Jersey Store...");
 
+  await prisma.review.deleteMany();
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
   await prisma.cartItem.deleteMany();
   await prisma.wishlistItem.deleteMany();
   await prisma.savedCustom.deleteMany();
   await prisma.address.deleteMany();
+  await prisma.coupon.deleteMany();
+  await prisma.newsletterSubscriber.deleteMany();
+  await prisma.verificationToken.deleteMany();
   await prisma.product.deleteMany();
   await prisma.session.deleteMany();
   await prisma.account.deleteMany();
@@ -512,7 +516,24 @@ async function main() {
     await prisma.product.create({ data: p });
   }
 
-  console.log(`Seeded ${products.length} products + staff/fan users`);
+  const coupons: {
+    code: string;
+    type: CouponType;
+    value: number;
+    minOrderInr: number;
+    maxDiscountInr: number | null;
+    usageLimit: number;
+  }[] = [
+    { code: "MATCHDAY10", type: CouponType.PERCENT, value: 10, minOrderInr: 2499, maxDiscountInr: 500, usageLimit: 500 },
+    { code: "KICKOFF200", type: CouponType.FLAT, value: 200, minOrderInr: 1999, maxDiscountInr: null, usageLimit: 250 },
+    { code: "FIRSTKIT", type: CouponType.PERCENT, value: 15, minOrderInr: 1499, maxDiscountInr: 400, usageLimit: 1000 },
+  ];
+
+  for (const coupon of coupons) {
+    await prisma.coupon.create({ data: coupon });
+  }
+
+  console.log(`Seeded ${products.length} products, ${coupons.length} coupons + staff/fan users`);
   console.log("Super: super@jerseystore.com / jersey123");
   console.log("Admin: admin@jerseystore.com / jersey123");
   console.log("User:  fan@jerseystore.com / jersey123");

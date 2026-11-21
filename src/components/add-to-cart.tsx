@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useCartStore } from "@/store/cart-store";
 import { parseJsonArray } from "@/lib/utils";
 
@@ -26,7 +25,6 @@ export function AddToCart({ product, customName, customNumber, patches }: Props)
   const [size, setSize] = useState(sizes[2] || sizes[0] || "M");
   const [added, setAdded] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
-  const router = useRouter();
 
   function buildItem() {
     return {
@@ -53,7 +51,8 @@ export function AddToCart({ product, customName, customNumber, patches }: Props)
 
   function buyNow() {
     addItem(buildItem());
-    router.push("/checkout");
+    // Full navigation — soft router.push can stall after cart persist
+    window.location.assign("/checkout");
   }
 
   return (
@@ -66,7 +65,7 @@ export function AddToCart({ product, customName, customNumber, patches }: Props)
               key={s}
               type="button"
               onClick={() => setSize(s)}
-              className={`min-w-10 border px-3 py-2 text-sm ${
+              className={`min-h-11 min-w-11 border px-3 py-2 text-sm ${
                 size === s ? "border-black bg-black text-lime" : "border-neutral-300 hover:border-black"
               }`}
             >
@@ -79,14 +78,14 @@ export function AddToCart({ product, customName, customNumber, patches }: Props)
         <button
           type="button"
           onClick={add}
-          className="w-full border border-black py-3 text-[11px] font-semibold uppercase tracking-[0.22em] transition hover:bg-neutral-50"
+          className="min-h-12 w-full border border-black py-3 text-[11px] font-semibold uppercase tracking-[0.22em] transition hover:bg-neutral-50"
         >
           {added ? "Added ✓" : "Add to bag"}
         </button>
         <button
           type="button"
           onClick={buyNow}
-          className="w-full bg-black py-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-lime transition hover:bg-neutral-900"
+          className="min-h-12 w-full bg-black py-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-lime transition hover:bg-neutral-900"
         >
           Buy now
         </button>

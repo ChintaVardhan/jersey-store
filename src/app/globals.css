@@ -32,6 +32,7 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -46,6 +47,13 @@ body {
   font-family: var(--font-body), ui-sans-serif, sans-serif;
   -webkit-font-smoothing: antialiased;
   min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+@media (max-width: 640px) {
+  body {
+    background-attachment: scroll;
+  }
 }
 
 .font-display {
@@ -64,6 +72,15 @@ button {
   font: inherit;
 }
 
+/* Prevent iOS zoom on focus — keep 16px on small screens */
+@media (max-width: 640px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
 input,
 textarea,
 select {
@@ -80,4 +97,22 @@ a {
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid rgba(18, 18, 18, 0.06);
   backdrop-filter: blur(8px);
+}
+
+.chip-scroll {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding-bottom: 0.25rem;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.chip-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.chip-scroll > * {
+  flex-shrink: 0;
 }

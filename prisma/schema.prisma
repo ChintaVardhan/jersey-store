@@ -31,8 +31,16 @@ enum OrderStatus {
   PAID
   PROCESSING
   SHIPPED
+  OUT_FOR_DELIVERY
   DELIVERED
+  RETURN_REQUESTED
+  RETURNED
   CANCELLED
+}
+
+enum CouponType {
+  PERCENT
+  FLAT
 }
 
 enum PaymentProvider {
@@ -49,6 +57,8 @@ model User {
   passwordHash  String?
   image         String?
   role          Role           @default(USER)
+  phone         String?
+  isActive      Boolean        @default(true)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   accounts      Account[]
@@ -58,6 +68,7 @@ model User {
   wishlistItems WishlistItem[]
   orders        Order[]
   savedCustoms  SavedCustom[]
+  reviews       Review[]
 }
 
 model Account {
@@ -114,12 +125,15 @@ model Product {
   imageColors   String
   image         String         @default("")
   searchable    String
+  rating        Float          @default(0)
+  reviewsCount  Int            @default(0)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   cartItems     CartItem[]
   wishlistItems WishlistItem[]
   orderItems    OrderItem[]
   savedCustoms  SavedCustom[]
+  reviews       Review[]
 }
 
 model CartItem {
@@ -173,11 +187,16 @@ model Order {
   userId            String
   addressId         String?
   status            OrderStatus     @default(PENDING)
+  orderNumber       String?         @unique
+  waybill           String?
   paymentProvider   PaymentProvider @default(DEMO)
   paymentId         String?
   subtotalInr       Int
+  discountInr       Int             @default(0)
+  couponCode        String?
   shippingInr       Int             @default(0)
   totalInr          Int
+  etaAt             DateTime?
   currency          String          @default("INR")
   notes             String?
   trackingNumber    String?
@@ -201,6 +220,39 @@ model OrderItem {
   patches      String?
   order        Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product      Product @relation(fields: [productId], references: [id])
+}
+
+model Coupon {
+  id             String     @id @default(cuid())
+  code           String     @unique
+  type           CouponType
+  value          Int
+  minOrderInr    Int
+  maxDiscountInr Int?
+  usageLimit     Int
+  timesUsed      Int        @default(0)
+  active         Boolean    @default(true)
+  createdAt      DateTime   @default(now())
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  productId  String
+  userId     String?
+  authorName String
+  rating     Int
+  comment    String
+  createdAt  DateTime @default(now())
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([productId])
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
 }
 
 model SavedCustom {
